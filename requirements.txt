@@ -1,0 +1,6 @@
+pyautogui==0.9.54
+python-docx==1.1.0
+pyperclip==1.8.2
+keyboard==0.13.5
+pygetwindow==0.0.9
+langdetect==1.0.9
