@@ -96,7 +96,7 @@ def apply_bold(length):
     # Return to end
     pyautogui.press('right', presses=length, interval=0.04)
 
-def human_type_text(text_content, runs=None):
+def human_type_text(text_content, runs=None, target_app="Word"):
     global is_running, is_paused
     pyautogui.FAILSAFE = True
     
@@ -117,7 +117,7 @@ def human_type_text(text_content, runs=None):
         pass
     # ---------------------------
 
-    print(f"\nStarting in 6 seconds... FOCUS Microsoft Word NOW!")
+    print(f"\nStarting in 6 seconds... FOCUS {target_app} NOW!")
     print(f"-> Press '{PAUSE_PLAY_KEY}' to PAUSE / PLAY.")
     print(f"-> Press '{EMERGENCY_STOP}' at any time to abort the process.")
     
@@ -141,8 +141,8 @@ def human_type_text(text_content, runs=None):
             
         try:
             active_window = gw.getActiveWindow()
-            if active_window is None or "Word" not in active_window.title:
-                print("Microsoft Word is not focused! Pausing... (Please focus Word!)")
+            if active_window is None or target_app not in active_window.title:
+                print(f"'{target_app}' is not focused! Pausing... (Please focus '{target_app}'!)")
                 time.sleep(1)
                 continue
         except Exception:
@@ -170,8 +170,51 @@ def human_type_text(text_content, runs=None):
 if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw() # Hide the main window
-    root.attributes('-topmost', True) # Bring the dialog to the front
     
+    # --- Choose Target App Dialog ---
+    app_choice = ["Word"] # default fallback
+    
+    dialog = tk.Toplevel(root)
+    dialog.title("Select Target Application")
+    dialog.geometry("380x230")
+    dialog.attributes('-topmost', True)
+    
+    tk.Label(dialog, text="Where do you want to type?", font=("Arial", 10, "bold")).pack(pady=10)
+    
+    var = tk.StringVar(value="Word")
+    
+    tk.Radiobutton(dialog, text="Microsoft Word", variable=var, value="Word").pack(anchor='w', padx=40)
+    tk.Radiobutton(dialog, text="Google Docs (Browser)", variable=var, value="Docs").pack(anchor='w', padx=40)
+    tk.Radiobutton(dialog, text="Notepad", variable=var, value="Notepad").pack(anchor='w', padx=40)
+    
+    custom_frame = tk.Frame(dialog)
+    custom_frame.pack(anchor='w', padx=40, pady=5, fill='x')
+    tk.Radiobutton(custom_frame, text="Other (Window title keyword):", variable=var, value="Other").pack(side='left')
+    custom_entry = tk.Entry(custom_frame, width=15)
+    custom_entry.pack(side='left', padx=5)
+    
+    def on_submit():
+        if var.get() == "Other":
+            app_choice[0] = custom_entry.get().strip() or "Word"
+        else:
+            app_choice[0] = var.get()
+        dialog.destroy()
+        
+    tk.Button(dialog, text="OK", command=on_submit, width=10).pack(pady=10)
+    
+    def on_close():
+        dialog.destroy()
+        exit(0)
+        
+    dialog.protocol("WM_DELETE_WINDOW", on_close)
+    dialog.grab_set()
+    dialog.wait_window()
+    
+    target_app = app_choice[0]
+    print(f"Target application set to: {target_app}")
+    # ---------------------------------
+    
+    root.attributes('-topmost', True) # Bring the file dialog to the front
     print("Please select a .txt or .docx file from the dialog...")
     path = filedialog.askopenfilename(
         title="Select a file to type",
@@ -229,4 +272,4 @@ if __name__ == "__main__":
     # For .odt / webpage → convert manually to .docx or .txt first
 
     print(f"Loaded {len(text)} characters.")
-    human_type_text(text, formatting_runs)
+    human_type_text(text, formatting_runs, target_app)
